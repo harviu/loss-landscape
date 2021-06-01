@@ -148,7 +148,6 @@ def test(testloader, net, criterion, use_cuda=True):
             inputs = Variable(inputs)
             (mean, logvar), x_reconstructed = net(inputs)
             recon_loss = net.reconstruction_loss(x_reconstructed,inputs) 
-            
             # for i in range(128):
             #     plt.imshow(x_reconstructed[i].cpu().detach().permute(1, 2, 0))
             #     plt.show()

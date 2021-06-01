@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import time
 from torch.autograd.variable import Variable
+from matplotlib import pyplot as plt
 
 def eval_loss(net, criterion, loader, use_cuda=False):
     """
@@ -44,6 +45,7 @@ def eval_loss(net, criterion, loader, use_cuda=False):
                 total_loss += loss.item()*batch_size
                 _, predicted = torch.max(outputs.data, 1)
                 correct += predicted.eq(targets).sum().item()
+            return total_loss/total, 100.*correct/total
 
         elif isinstance(criterion, nn.MSELoss):
             for batch_idx, (inputs, targets) in enumerate(loader):
@@ -62,5 +64,31 @@ def eval_loss(net, criterion, loader, use_cuda=False):
                 total_loss += loss.item()*batch_size
                 _, predicted = torch.max(outputs.data, 1)
                 correct += predicted.cpu().eq(targets).sum().item()
+            return total_loss/total, 100.*correct/total
+        
+        elif criterion == "vae":
+            total_recon_loss = 0
+            total_kl_loss = 0
+            for batch_idx, (inputs, targets) in enumerate(loader):
+                batch_size = inputs.size(0)
+                total += batch_size
+                if use_cuda:
+                    inputs = inputs.cuda()
+                inputs = Variable(inputs)
+                (mean, logvar), x_reconstructed = net(inputs)
+                recon_loss = net.reconstruction_loss(x_reconstructed,inputs) 
+                # print(inputs.shape)
+                # print(recon_loss.item())
+                # for i in range(128):
+                #     plt.imshow(x_reconstructed[i].cpu().detach().permute(1, 2, 0))
+                #     plt.show()
+                #     plt.imshow(inputs[i].cpu().detach().permute(1, 2, 0))
+                #     plt.show()
+                # exit()
+                kl_loss = net.kl_divergence_loss(mean,logvar)
+                loss = recon_loss + kl_loss
+                total_recon_loss += recon_loss.item()*batch_size
+                total_loss += loss.item()*batch_size
+                total_kl_loss += kl_loss.item()*batch_size
+            return total_loss/total, total_kl_loss/total
 
-    return total_loss/total, 100.*correct/total

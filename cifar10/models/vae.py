@@ -75,10 +75,14 @@ class VAE(nn.Module):
         return eps.mul(std).add_(mean)
 
     def reconstruction_loss(self, x_reconstructed, x):
+        if torch.sum(torch.isnan(x_reconstructed)) > 0:
+            return torch.Tensor([1900])
         return nn.BCELoss(reduction="sum")(x_reconstructed, x) / x.size(0)
 
     def kl_divergence_loss(self, mean, logvar):
-        return 10 * ((mean**2 + logvar.exp() - 1 - logvar) / 2).mean()
+        if torch.sum(torch.isnan(mean))+torch.sum(torch.isnan(logvar)) > 0:
+            return torch.Tensor([-1])
+        return ((mean**2 + logvar.exp() - 1 - logvar) / 2).mean()
 
     # =====
     # Utils

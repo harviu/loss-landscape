@@ -102,9 +102,12 @@ def crunch(surf_file, net, w, s, d, dataloader, loss_key, acc_key, comm, rank, a
     start_time = time.time()
     total_sync = 0.0
 
-    criterion = nn.CrossEntropyLoss()
-    if args.loss_name == 'mse':
-        criterion = nn.MSELoss()
+    if args.model == "vae":
+        criterion = "vae"
+    else:
+        criterion = nn.CrossEntropyLoss()
+        if args.loss_name == 'mse':
+            criterion = nn.MSELoss()
 
     # Loop over all uncalculated loss values
     for count, ind in enumerate(inds):
